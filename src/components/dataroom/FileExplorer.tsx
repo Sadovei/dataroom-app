@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, DragEvent } from 'react';
-import { useDataRoomStore } from '@/store/dataroom-store';
+import { useDataRoomStore } from '@/store/supabase-store';
 import { FileSystemItem } from '@/types';
 import { 
   Folder, 
@@ -60,7 +60,7 @@ export function FileExplorer({
     navigateToFolder,
     setCurrentDataRoom,
     uploadFile,
-    getFileContent,
+    getFileUrl,
     dataRooms,
     selectedItems,
     toggleItemSelection,
@@ -72,9 +72,10 @@ export function FileExplorer({
 
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
+    if (!currentDataRoomId) return;
 
     for (const file of Array.from(files)) {
-      const result = await uploadFile(file, currentFolderId);
+      const result = await uploadFile(file, currentDataRoomId, currentFolderId ?? undefined);
       if ('error' in result) {
         toast.error(result.error);
       } else {
@@ -101,18 +102,19 @@ export function FileExplorer({
     await handleFileUpload(files);
   };
 
-  const handleDownload = (item: FileSystemItem) => {
+  const handleDownload = async (item: FileSystemItem) => {
     if (item.type !== 'file') return;
     
-    const content = getFileContent(item.id);
-    if (!content) {
-      toast.error('File content not found');
+    const url = await getFileUrl(item.id);
+    if (!url) {
+      toast.error('File not found');
       return;
     }
 
     const link = document.createElement('a');
-    link.href = content;
+    link.href = url;
     link.download = item.name;
+    link.target = '_blank';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

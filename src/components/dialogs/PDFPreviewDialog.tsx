@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { FileSystemItem } from '@/types';
-import { useDataRoomStore } from '@/store/dataroom-store';
+import { useDataRoomStore } from '@/store/supabase-store';
 import { X, Download, ZoomIn, ZoomOut, RotateCw, Loader2 } from 'lucide-react';
 
 interface PDFPreviewDialogProps {
@@ -23,21 +23,33 @@ export function PDFPreviewDialog({
   onOpenChange,
   item,
 }: PDFPreviewDialogProps) {
-  const { getFileContent } = useDataRoomStore();
+  const { getFileUrl } = useDataRoomStore();
   const [scale, setScale] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [fileUrl, setFileUrl] = useState<string | null>(null);
+
+  // Fetch file URL when dialog opens
+  useEffect(() => {
+    if (open && item && item.type === 'file') {
+      setIsLoading(true);
+      setFileUrl(null);
+      getFileUrl(item.id).then((url) => {
+        setFileUrl(url);
+        if (!url) setIsLoading(false);
+      });
+    }
+  }, [open, item, getFileUrl]);
 
   if (!item || item.type !== 'file') return null;
 
-  const content = getFileContent(item.id);
-
   const handleDownload = () => {
-    if (!content) return;
+    if (!fileUrl) return;
     
     const link = document.createElement('a');
-    link.href = content;
+    link.href = fileUrl;
     link.download = item.name;
+    link.target = '_blank';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -85,19 +97,18 @@ export function PDFPreviewDialog({
         </DialogHeader>
         
         <div className="flex-1 overflow-auto bg-muted/50 p-4">
-          {!content ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : !fileUrl ? (
             <div className="flex items-center justify-center h-full">
               <p className="text-muted-foreground">File content not available</p>
             </div>
           ) : (
             <div className="flex items-center justify-center min-h-full">
-              {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/80">
-                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-                </div>
-              )}
               <iframe
-                src={content}
+                src={fileUrl}
                 className="w-full h-full min-h-[70vh] border-0 bg-white rounded-lg shadow-lg"
                 style={{
                   transform: `scale(${scale}) rotate(${rotation}deg)`,

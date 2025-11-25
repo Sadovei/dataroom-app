@@ -14,12 +14,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FileSystemItem } from '@/types';
 import { getFileNameWithoutExtension } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
 
 interface RenameDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   item: FileSystemItem | null;
-  onConfirm: (id: string, newName: string) => void | { error: string };
+  onConfirm: (id: string, newName: string) => void | { error: string } | Promise<void | { error: string }>;
 }
 
 export function RenameDialog({
@@ -36,6 +37,7 @@ export function RenameDialog({
   
   const [name, setName] = useState(initialName);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleOpenChange = (newOpen: boolean) => {
     if (newOpen && item) {
@@ -45,7 +47,7 @@ export function RenameDialog({
     onOpenChange(newOpen);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!item) return;
@@ -68,13 +70,17 @@ export function RenameDialog({
       return;
     }
 
-    const result = onConfirm(item.id, trimmedName);
-    if (result && 'error' in result) {
-      setError(result.error);
-      return;
+    setIsSubmitting(true);
+    try {
+      const result = await onConfirm(item.id, trimmedName);
+      if (result && 'error' in result) {
+        setError(result.error);
+        return;
+      }
+      handleOpenChange(false);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    handleOpenChange(false);
   };
 
   if (!item) return null;
@@ -116,10 +122,13 @@ export function RenameDialog({
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit">Rename</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Rename
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

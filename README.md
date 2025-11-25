@@ -11,9 +11,10 @@ A modern, secure virtual data room application built with Next.js 14 for organiz
 ## ✨ Features
 
 ### Core Functionality
+- **Google OAuth Authentication**: Secure login with Google via Supabase Auth
 - **Data Rooms**: Create multiple data rooms to organize different projects/deals
 - **Folder Management**: Create nested folders with unlimited depth
-- **File Upload**: Upload PDF files with drag-and-drop support
+- **File Upload**: Upload PDF files with drag-and-drop support (stored in Supabase Storage)
 - **PDF Preview**: View PDF documents directly in the browser
 - **Search**: Real-time search across files and folders
 - **View Modes**: Toggle between grid and list views
@@ -40,7 +41,8 @@ A modern, secure virtual data room application built with Next.js 14 for organiz
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS v4
 - **UI Components**: shadcn/ui
-- **State Management**: Zustand with localStorage persistence
+- **State Management**: Zustand
+- **Backend**: Supabase (Auth + PostgreSQL + Storage)
 - **Icons**: Lucide React
 
 ## 📁 Project Structure
@@ -48,14 +50,16 @@ A modern, secure virtual data room application built with Next.js 14 for organiz
 ```
 src/
 ├── app/                    # Next.js app router pages
+│   ├── auth/callback/     # OAuth callback handler
+│   ├── login/             # Login page
 │   ├── globals.css        # Global styles with CSS variables
-│   ├── layout.tsx         # Root layout
+│   ├── layout.tsx         # Root layout with AuthProvider
 │   └── page.tsx           # Main page
 ├── components/
 │   ├── dataroom/          # Data room components
-│   │   ├── DataRoomApp.tsx    # Main app orchestrator
-│   │   ├── DataRoomList.tsx   # Data room cards grid
-│   │   └── FileExplorer.tsx   # File/folder explorer
+│   │   ├── DataRoomAppSupabase.tsx  # Main app with Supabase
+│   │   ├── DataRoomList.tsx         # Data room cards grid
+│   │   └── FileExplorer.tsx         # File/folder explorer
 │   ├── dialogs/           # Modal dialogs
 │   │   ├── CreateDataRoomDialog.tsx
 │   │   ├── CreateFolderDialog.tsx
@@ -65,12 +69,21 @@ src/
 │   ├── layout/            # Layout components
 │   │   └── Header.tsx
 │   └── ui/                # shadcn/ui components
+├── contexts/
+│   └── AuthContext.tsx    # Auth context provider
 ├── lib/
+│   ├── supabase/          # Supabase client configuration
+│   │   ├── client.ts      # Browser client
+│   │   ├── server.ts      # Server client
+│   │   └── middleware.ts  # Auth middleware
 │   └── utils.ts           # Utility functions
 ├── store/
-│   └── dataroom-store.ts  # Zustand store with persistence
+│   ├── dataroom-store.ts  # Local storage store (legacy)
+│   └── supabase-store.ts  # Supabase-backed store
 └── types/
     └── index.ts           # TypeScript type definitions
+supabase/
+└── schema.sql             # Database schema with RLS policies
 ```
 
 ## 🚦 Getting Started
@@ -79,8 +92,29 @@ src/
 
 - Node.js 18+ 
 - npm or yarn
+- Supabase account (free tier works!)
 
-### Installation
+### Supabase Setup
+
+1. Create a new project at [supabase.com](https://supabase.com/dashboard)
+
+2. Run the database schema:
+   - Go to SQL Editor in your Supabase dashboard
+   - Copy and paste the contents of `supabase/schema.sql`
+   - Click "Run"
+
+3. Enable Google OAuth:
+   - Go to Authentication > Providers > Google
+   - Enable Google provider
+   - Add your Google OAuth credentials (Client ID and Secret)
+   - Get credentials from [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+
+4. Configure redirect URLs:
+   - In Supabase Auth settings, add:
+     - `http://localhost:3000/auth/callback` (for development)
+     - `https://your-domain.vercel.app/auth/callback` (for production)
+
+### Local Installation
 
 1. Clone the repository:
 ```bash
@@ -93,12 +127,23 @@ cd dataroom-app
 npm install
 ```
 
-3. Run the development server:
+3. Create `.env.local` file:
+```bash
+cp .env.local.example .env.local
+```
+
+4. Add your Supabase credentials to `.env.local`:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+5. Run the development server:
 ```bash
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+6. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### Build for Production
 
@@ -107,12 +152,26 @@ npm run build
 npm start
 ```
 
+### Deploy to Vercel
+
+1. Push your code to GitHub
+2. Import project in Vercel
+3. Add environment variables:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Deploy!
+
 ## 🎯 Design Decisions
 
 ### 1. State Management with Zustand
-Chose Zustand over Redux for its simplicity and minimal boilerplate. The store uses localStorage persistence to maintain data across sessions without needing a backend.
+Chose Zustand over Redux for its simplicity and minimal boilerplate. The store syncs with Supabase for persistence.
 
-### 2. Data Structure
+### 2. Supabase as Backend
+- **Auth**: Google OAuth for secure, passwordless login
+- **Database**: PostgreSQL with Row Level Security
+- **Storage**: Secure file storage with signed URLs
+
+### 3. Data Structure
 ```typescript
 interface DataRoom {
   id: string;

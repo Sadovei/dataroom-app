@@ -12,11 +12,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Loader2 } from 'lucide-react';
 
 interface CreateFolderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (name: string) => void | { error: string };
+  onConfirm: (name: string) => void | { error: string } | Promise<void | { error: string }>;
 }
 
 export function CreateFolderDialog({
@@ -26,6 +27,7 @@ export function CreateFolderDialog({
 }: CreateFolderDialogProps) {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleOpenChange = (newOpen: boolean) => {
     if (newOpen) {
@@ -35,7 +37,7 @@ export function CreateFolderDialog({
     onOpenChange(newOpen);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const trimmedName = name.trim();
@@ -56,13 +58,17 @@ export function CreateFolderDialog({
       return;
     }
 
-    const result = onConfirm(trimmedName);
-    if (result && 'error' in result) {
-      setError(result.error);
-      return;
+    setIsSubmitting(true);
+    try {
+      const result = await onConfirm(trimmedName);
+      if (result && 'error' in result) {
+        setError(result.error);
+        return;
+      }
+      handleOpenChange(false);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    handleOpenChange(false);
   };
 
   return (
@@ -92,10 +98,13 @@ export function CreateFolderDialog({
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit">Create</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Create
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useDataRoomStore } from '@/store/dataroom-store';
+import { useDataRoomStore } from '@/store/supabase-store';
 import { DataRoom } from '@/types';
 import { 
   FolderOpen, 
