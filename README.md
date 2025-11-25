@@ -6,7 +6,7 @@ A modern, secure virtual data room application built with Next.js 14 for organiz
 
 ## 🚀 Live Demo
 
-[View Live Demo](https://dataroom-app-vercel-57roxrrw6-sadoveis-projects.vercel.app/)
+[View Live Demo](https://dataroom-app-vercel-mearyykwk-sadoveis-projects.vercel.app/)
 
 [View on GitHub](https://github.com/Sadovei/dataroom-app)
 
