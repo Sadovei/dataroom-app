@@ -6,7 +6,9 @@ A modern, secure virtual data room application built with Next.js 14 for organiz
 
 ## 🚀 Live Demo
 
-[View Live Demo](https://your-vercel-url.vercel.app)
+[View Live Demo](https://dataroom-app-vercel-57roxrrw6-sadoveis-projects.vercel.app/)
+
+[View on GitHub](https://github.com/Sadovei/dataroom-app)
 
 ## ✨ Features
 
@@ -78,8 +80,7 @@ src/
 │   │   └── middleware.ts  # Auth middleware
 │   └── utils.ts           # Utility functions
 ├── store/
-│   ├── dataroom-store.ts  # Local storage store (legacy)
-│   └── supabase-store.ts  # Supabase-backed store
+│   └── supabase-store.ts  # Supabase-backed store with Zustand
 └── types/
     └── index.ts           # TypeScript type definitions
 supabase/
@@ -112,13 +113,13 @@ supabase/
 4. Configure redirect URLs:
    - In Supabase Auth settings, add:
      - `http://localhost:3000/auth/callback` (for development)
-     - `https://your-domain.vercel.app/auth/callback` (for production)
+     - `https://dataroom-app-vercel-57roxrrw6-sadoveis-projects.vercel.app/auth/callback` (for production)
 
 ### Local Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/dataroom-app.git
+git clone https://github.com/Sadovei/dataroom-app.git
 cd dataroom-app
 ```
 
@@ -129,7 +130,7 @@ npm install
 
 3. Create `.env.local` file:
 ```bash
-cp .env.local.example .env.local
+cp .env.example .env.local
 ```
 
 4. Add your Supabase credentials to `.env.local`:
@@ -205,12 +206,10 @@ This flat structure with `parentId` references allows for:
 - Simple breadcrumb generation
 
 ### 3. File Storage
-Files are stored as Base64 in localStorage for the MVP. This approach:
-- Works without a backend
-- Persists across sessions
-- Has limitations (localStorage ~5-10MB limit)
-
-For production, this would be replaced with cloud storage (S3, Supabase Storage).
+Files are stored in Supabase Storage with:
+- Secure signed URLs for access
+- Row Level Security policies
+- 50MB file size limit per upload
 
 ### 4. Component Architecture
 - **DataRoomApp**: Orchestrates all dialogs and actions
@@ -230,15 +229,7 @@ This separation makes testing easier and follows single-responsibility principle
 
 Given more time, I would add:
 
-1. **Backend Integration**
-   - Supabase for auth, database, and file storage
-   - Real-time collaboration
-
-2. **Authentication**
-   - Google OAuth / Magic links
-   - User permissions and sharing
-
-3. **Enhanced Features**
+1. **Enhanced Features**
    - Move/copy files between folders
    - Multi-select operations
    - File versioning
@@ -256,4 +247,4 @@ MIT
 
 ## 👤 Author
 
-Radu Sadovei - [GitHub](https://github.com/yourusername)
+Radu Sadovei - [GitHub](https://github.com/Sadovei)
